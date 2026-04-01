@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoRent - Véhicules</title>
+<link rel="stylesheet" href="lobby.css">
+</head>
+
+<body>
+
+<nav class="barre-nav">
+    <div class="nom-site">Auto<span>Rent</span></div>
+    <ul class="liste-liens">
+        <li><a href="#">Accueil</a></li>
+        <li><a href="#vehicules">Véhicules</a></li>
+    </ul>
+</nav>
+
+<section class="section-hero">
+    <div class="texte-hero">
+        <h1>AutoRent — Partez où vous voulez,<br><span>quand vous voulez</span></h1>
+        <p>Performance · Élégance · Confort</p>
+        <a href="#vehicules" class="bouton-voir-vehicules">Voir les véhicules</a>
+    </div>
+</section>
+
+<section class="section-liste-voitures">
+    <h2 id="vehicules" class="titre-section">Liste des véhicules</h2>
+    <p class="sous-titre-section">Filtrez par type de véhicule pour trouver votre bonheur</p>
+
+    <select class="liste-deroulante-type" id="filtre">
+        <option value="">-- Tous les types --</option>
+        <option value="Voiture">Voiture</option>
+        <option value="Moto">Moto</option>
+        <option value="CampingCar">Camping-Car</option>
+    </select>
+
+    <div class="grille-voitures" id="grille"></div>
+</section>
+
+<script>
+let vehicules = [];
+
+// Charger le CSV
+fetch("disponible.csv")
+.then(res => res.text())
+.then(data => {
+    const lignes = data.trim().split("\n");
+    const entetes = lignes[0].split(";");
+
+    for (let i = 1; i < lignes.length; i++) {
+        const valeurs = lignes[i].split(";");
+        let obj = {};
+        entetes.forEach((e, index) => {
+            obj[e] = valeurs[index];
+        });
+        vehicules.push(obj);
+    }
+
+    afficher();
+});
+
+// Filtre
+document.getElementById("filtre").addEventListener("change", afficher);
+
+// Affichage
+function afficher() {
+    const filtre = document.getElementById("filtre").value;
+    const grille = document.getElementById("grille");
+
+    grille.innerHTML = "";
+
+    vehicules.forEach(v => {
+        if (filtre === "" || v.Type === filtre) {
+
+            let badgeClass = "badge-reparation";
+            if (v.Etat === "Disponible") badgeClass = "badge-disponible";
+            else if (v.Etat === "Loué") badgeClass = "badge-loue";
+
+            let details = "";
+
+            if (v.Type === "Voiture") {
+                details = `
+                    <p class="info-voiture"><strong>Places :</strong> ${v.Divers1 || 'N/A'}</p>
+                    <p class="info-voiture"><strong>Climatisation :</strong> ${v.Divers2 || 'N/A'}</p>
+                `;
+            } else if (v.Type === "Moto") {
+                details = `
+                    <p class="info-voiture"><strong>Cylindrée :</strong> ${v.Divers1 || 'N/A'} cc</p>
+                    <p class="info-voiture"><strong>Permis :</strong> ${v.Divers2 || 'N/A'}</p>
+                `;
+            } else {
+                details = `
+                    <p class="info-voiture"><strong>Longueur :</strong> ${v.Divers1 || 'N/A'} m</p>
+                    <p class="info-voiture"><strong>Couchages :</strong> ${v.Divers2 || 'N/A'}</p>
+                `;
+            }
+
+            const div = document.createElement("div");
+            div.className = "carte-voiture";
+
+            div.innerHTML = `
+                <div class="entete-carte">
+                    <span class="${badgeClass}">${v.Etat}</span>
+                    <span class="plaque-immat">${v.Immatriculation}</span>
+                </div>
+
+                <div class="nom-vehicule">${v.Marque} ${v.Modele}</div>
+                <div class="prix-bleu">${v.Prix} € <small>/ jour</small></div>
+
+                <div class="ligne-separateur"></div>
+
+                <p class="info-voiture"><strong>Kilométrage :</strong> ${v.Km} km</p>
+
+                <div class="details-techniques">
+                    ${details}
+                </div>
+            `;
+
+            grille.appendChild(div);
+        }
+    });
+}
+</script>
+
+</body>
+</html>
